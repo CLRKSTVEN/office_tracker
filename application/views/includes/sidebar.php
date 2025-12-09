@@ -1,23 +1,3 @@
-<?php
-if (!isset($online_settings)) {
-    $settingsRow = $this->db->select('show_online_payments')
-        ->from('o_srms_settings')->limit(1)->get()->row();
-    $online_settings = $settingsRow ?: (object)['show_online_payments' => 1]; // default ON
-}
-$showOnline = (int)($online_settings->show_online_payments ?? 1);
-?>
-
-<style>
-    .left-side-menu .metismenu li>ul {
-        display: none !important;
-    }
-
-    .left-side-menu .metismenu li.mm-open>ul,
-    .left-side-menu .metismenu li>ul.mm-show {
-        display: block !important;
-    }
-</style>
-
 <div class="left-side-menu">
     <div class="slimscroll-menu">
         <!-- System Administrator -->
