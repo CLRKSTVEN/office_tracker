@@ -6,18 +6,18 @@
             $currentUri = trim(uri_string(), '/');
             $segment1   = strtolower($this->uri->segment(1) ?? '');
             $segment2   = strtolower($this->uri->segment(2) ?? '');
+            $isDashboard = ($segment1 === 'dashboard' || $currentUri === 'dashboard');
             ?>
             <div id="sidebar-menu">
                 <ul class="metismenu" id="side-menu">
 
                     <li class="menu-title">ADMINISTRATION</li>
-                    <li>
-                        <a href="<?= base_url(); ?>Page/admin" class="waves-effect">
-                            <i class="bi bi-speedometer2"></i>
-                            <span> Dashboard </span>
+                    <li class="<?= $isDashboard ? 'active' : ''; ?>">
+                        <a href="<?= base_url('dashboard'); ?>" class="waves-effect">
+                            <i class="bi bi-house-door-fill"></i>
+                            <span> Dashboard (Staff) </span>
                         </a>
                     </li>
-
                     <li>
                         <a href="<?= base_url('Page/profileList'); ?>">
                             <i class="bi bi-person-fill"></i>
@@ -210,6 +210,26 @@
                         <a href="<?= base_url('Login/logout'); ?>" class="waves-effect logout-confirm">
                             <i class="ion bi bi-box-arrow-right"></i>
                             <span> Logout </span>
+                        </a>
+                    </li>
+
+                    <li class="menu-title mt-3">OFFICE TRACKER</li>
+                    <li class="<?= $isDashboard ? 'active' : ''; ?>">
+                        <a href="<?= base_url('dashboard'); ?>">
+                            <i class="bi bi-grid-1x2-fill"></i>
+                            <span> Staff Dashboard </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= base_url('dashboard#formSection'); ?>">
+                            <i class="bi bi-journal-plus"></i>
+                            <span> Log Accomplishment </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= base_url('register'); ?>">
+                            <i class="bi bi-person-plus-fill"></i>
+                            <span> Register Staff </span>
                         </a>
                     </li>
                     <!-- Settings (keep visible) -->
@@ -1197,9 +1217,21 @@
                 <ul class="metismenu" id="side-menu">
                     <li class="menu-title">Navigation</li>
                     <li>
-                        <a href="<?= base_url('Page/admin'); ?>" class="waves-effect">
+                        <a href="<?= base_url('dashboard'); ?>" class="waves-effect">
                             <i class="bi bi-house-door"></i>
-                            <span> Dashboard </span>
+                            <span> Staff Dashboard </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= base_url('register'); ?>" class="waves-effect">
+                            <i class="bi bi-person-plus"></i>
+                            <span> Register Staff </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?= base_url('dashboard#formSection'); ?>" class="waves-effect">
+                            <i class="bi bi-journal-plus"></i>
+                            <span> Log Accomplishment </span>
                         </a>
                     </li>
                     <li>
