@@ -76,13 +76,31 @@ class Accomplishment_model extends CI_Model
     public function categories_for_staff($staffId)
     {
         return $this->db
-            ->distinct()
             ->select('category')
             ->where('staff_id', (int) $staffId)
             ->where('category IS NOT NULL')
             ->where('category !=', '')
+            ->group_by('category')
             ->order_by('category', 'ASC')
             ->get($this->table)
+            ->result();
+    }
+
+    /**
+     * Fetch latest accomplishments across all staff for admin overview.
+     */
+    public function recent($limit = 5)
+    {
+        $limit = max(1, (int) $limit);
+
+        return $this->db
+            ->select('a.*, s.first_name, s.last_name, s.position_title')
+            ->from($this->table . ' a')
+            ->join('staff s', 's.staff_id = a.staff_id', 'left')
+            ->order_by('a.updated_at', 'DESC')
+            ->order_by('a.start_date', 'DESC')
+            ->limit($limit)
+            ->get()
             ->result();
     }
 }

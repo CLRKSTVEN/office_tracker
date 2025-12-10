@@ -68,41 +68,26 @@ class Login extends CI_Controller
     {
         $this->_require_login();
 
-        $role = $this->session->userdata('role') ?: 'staff';
-        $staffId = (int) $this->session->userdata('staff_id');
+        if ($this->_is_admin()) {
+            return $this->_render_admin_dashboard();
+        }
 
-        $stats = [
-            'total_staff'        => $this->Staff_model->count_active(),
-            'total_offices'      => $this->Office_model->count_all(),
-            'total_accomplishments' => $this->Accomplishment_model->count_all(),
-            'my_accomplishments' => $this->Accomplishment_model->count_for_staff($staffId),
-            'public_accomplishments' => $this->Accomplishment_model->count_public_for_staff($staffId),
+        return $this->_render_staff_overview();
+    }
+
+    public function accomplishments()
+    {
+        $this->_require_login();
+
+        $nav = [
+            ['label' => 'Back to dashboard', 'url' => site_url('dashboard')],
         ];
 
-        $accomplishments = $staffId > 0
-            ? $this->Accomplishment_model->get_for_staff($staffId)
-            : [];
-        $categories = $staffId > 0
-            ? $this->Accomplishment_model->categories_for_staff($staffId)
-            : [];
+        if ($this->_is_admin()) {
+            $nav[] = ['label' => 'Register staff', 'url' => site_url('register')];
+        }
 
-        $data = [
-            'stats'          => $stats,
-            'accomplishments' => $accomplishments,
-            'accomplishment_categories' => array_filter(array_map(function ($row) {
-                return $row->category;
-            }, $categories)),
-            'office_list'    => $this->Office_model->get_all(),
-            'dashboard_nav'  => [
-                ['target' => '#statsSection', 'label' => 'Overview', 'count' => $stats['total_staff']],
-                ['target' => '#accomplishmentsSection', 'label' => 'My accomplishments', 'count' => $stats['my_accomplishments']],
-                ['target' => '#formSection', 'label' => 'Quick entry', 'count' => max(1, $stats['public_accomplishments'])],
-            ],
-            'can_manage_accomplishments' => $staffId > 0,
-        ];
-
-        $view = $role === 'admin' ? 'dashboard_admin' : 'dashboard_staff';
-        $this->load->view($view, $data);
+        return $this->_render_staff_dashboard($nav);
     }
 
     public function save_accomplishment()
@@ -120,7 +105,7 @@ class Login extends CI_Controller
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors('', ''));
-            return redirect('dashboard#formSection');
+            return redirect('dashboard/log');
         }
 
         $startDate = $this->input->post('start_date', TRUE);
@@ -138,7 +123,7 @@ class Login extends CI_Controller
 
         $this->Accomplishment_model->create($payload);
         $this->session->set_flashdata('success', 'Accomplishment saved.');
-        redirect('dashboard');
+        redirect('dashboard/log');
     }
 
     public function update_accomplishment()
@@ -156,7 +141,7 @@ class Login extends CI_Controller
 
         if ($this->form_validation->run() === FALSE) {
             $this->session->set_flashdata('error', validation_errors('', ''));
-            return redirect('dashboard#formSection');
+            return redirect('dashboard/log');
         }
 
         $id = (int)$this->input->post('id', TRUE);
@@ -180,7 +165,7 @@ class Login extends CI_Controller
 
         $this->Accomplishment_model->update($id, $staffId, $payload);
         $this->session->set_flashdata('success', 'Accomplishment updated.');
-        redirect('dashboard');
+        redirect('dashboard/log');
     }
 
     public function delete_accomplishment($id = null)
@@ -206,7 +191,7 @@ class Login extends CI_Controller
 
         $this->Accomplishment_model->delete($id, $staffId);
         $this->session->set_flashdata('success', 'Accomplishment deleted.');
-        redirect('dashboard');
+        redirect('dashboard/log');
     }
 
 
@@ -224,8 +209,11 @@ class Login extends CI_Controller
      */
     public function register()
     {
-        if ($this->session->userdata('logged_in')) {
-            // Already logged in, go to dashboard (optional)
+        $loggedIn = (bool) $this->session->userdata('logged_in');
+        $isAdmin  = $this->_is_admin();
+
+        // Only admins can access while logged in. Guests may still self-register.
+        if ($loggedIn && !$isAdmin) {
             return redirect('dashboard');
         }
 
@@ -242,6 +230,11 @@ class Login extends CI_Controller
      */
     public function register_save()
     {
+        $loggedIn = (bool) $this->session->userdata('logged_in');
+        if ($loggedIn && !$this->_is_admin()) {
+            return redirect('dashboard');
+        }
+
         // Basic validation
         $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
         $this->form_validation->set_rules('last_name',  'Last Name',  'required|trim');
@@ -306,6 +299,111 @@ class Login extends CI_Controller
         // Success: redirect to login
         $this->session->set_flashdata('auth_error', 'Registration successful. You may now log in.');
         redirect('login');
+    }
+
+    /**
+     * Admin overview dashboard.
+     */
+    private function _render_admin_dashboard()
+    {
+        $staffId = (int) $this->session->userdata('staff_id');
+
+        $stats = [
+            'total_staff'            => $this->Staff_model->count_active(),
+            'total_offices'          => $this->Office_model->count_all(),
+            'total_accomplishments'  => $this->Accomplishment_model->count_all(),
+            'my_accomplishments'     => $this->Accomplishment_model->count_for_staff($staffId),
+            'public_accomplishments' => $this->Accomplishment_model->count_public_for_staff($staffId),
+        ];
+
+        $data = [
+            'stats' => $stats,
+            'dashboard_nav' => [
+                ['target' => site_url('dashboard/log'), 'label' => 'Accomplishments', 'count' => $stats['my_accomplishments']],
+                ['target' => site_url('register'), 'label' => 'Register staff', 'count' => $stats['total_staff']],
+            ],
+            'recent_accomplishments' => $this->Accomplishment_model->recent(5),
+            'latest_staff'           => $this->Staff_model->recent(6),
+        ];
+
+        $this->load->view('dashboard_admin', $data);
+    }
+
+    /**
+     * Staff-focused accomplishments dashboard.
+     */
+    private function _render_staff_dashboard(?array $overviewNav = null)
+    {
+        $data = $this->_staff_dashboard_data($overviewNav);
+        $this->load->view('dashboard_staff', $data);
+    }
+
+    private function _render_staff_overview()
+    {
+        $data = $this->_staff_overview_data();
+        $this->load->view('dashboard_overview', $data);
+    }
+
+    private function _staff_dashboard_data(?array $overviewNav = null)
+    {
+        $staffId = (int) $this->session->userdata('staff_id');
+
+        $accomplishments = $staffId > 0
+            ? $this->Accomplishment_model->get_for_staff($staffId)
+            : [];
+
+        $categories = $staffId > 0
+            ? $this->Accomplishment_model->categories_for_staff($staffId)
+            : [];
+
+        if ($overviewNav === null) {
+            $overviewNav = $this->_is_admin()
+                ? [
+                    ['label' => 'Dashboard overview', 'url' => site_url('dashboard')],
+                    ['label' => 'Register staff', 'url' => site_url('register')],
+                ]
+                : [];
+        }
+
+        return [
+            'accomplishments' => $accomplishments,
+            'accomplishment_categories' => array_filter(array_map(function ($row) {
+                return $row->category;
+            }, $categories)),
+            'can_manage_accomplishments' => $staffId > 0,
+            'overview_nav' => $overviewNav,
+        ];
+    }
+
+    private function _staff_overview_data()
+    {
+        $staffId = (int) $this->session->userdata('staff_id');
+
+        $stats = [
+            'total_staff'           => $this->Staff_model->count_active(),
+            'total_offices'         => $this->Office_model->count_all(),
+            'total_accomplishments' => $staffId > 0 ? $this->Accomplishment_model->count_for_staff($staffId) : 0,
+            'public_accomplishments'=> $staffId > 0 ? $this->Accomplishment_model->count_public_for_staff($staffId) : 0,
+        ];
+
+        $dashboardNav = [
+            ['label' => 'Log accomplishments', 'target' => site_url('dashboard/log')],
+        ];
+
+        return [
+            'dashboard_nav' => $dashboardNav,
+            'stats'         => $stats,
+        ];
+    }
+
+    private function _is_admin()
+    {
+        return strtolower((string) $this->session->userdata('role')) === 'admin';
+    }
+
+    private function _is_staff()
+    {
+        return strtolower((string) $this->session->userdata('role')) === 'staff';
     }
 
     /**

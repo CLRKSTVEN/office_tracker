@@ -25,4 +25,15 @@ class Staff_model extends CI_Model
             ->get('staff', $limit, $offset)
             ->result();
     }
+
+    public function recent($limit = 6)
+    {
+        $limit = max(1, (int) $limit);
+
+        return $this->db
+            ->order_by('created_at', 'DESC')
+            ->order_by('staff_id', 'DESC')
+            ->get('staff', $limit)
+            ->result();
+    }
 }
