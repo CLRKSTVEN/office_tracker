@@ -15,6 +15,22 @@ class Accomplishment_model extends CI_Model
             ->result();
     }
 
+    /**
+     * Latest accomplishments for a single staff member.
+     */
+    public function recent_for_staff($staffId, $limit = 10)
+    {
+        $limit = max(1, (int) $limit);
+
+        return $this->db
+            ->where('staff_id', (int) $staffId)
+            ->order_by('updated_at', 'DESC')
+            ->order_by('start_date', 'DESC')
+            ->limit($limit)
+            ->get($this->table)
+            ->result();
+    }
+
     public function count_for_staff($staffId)
     {
         return (int) $this->db

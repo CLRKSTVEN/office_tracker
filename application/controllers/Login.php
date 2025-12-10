@@ -356,6 +356,8 @@ class Login extends CI_Controller
             ? $this->Accomplishment_model->categories_for_staff($staffId)
             : [];
 
+        $addresses = $this->db->get('settings_address')->result();
+
         if ($overviewNav === null) {
             $overviewNav = $this->_is_admin()
                 ? [
@@ -372,18 +374,23 @@ class Login extends CI_Controller
             }, $categories)),
             'can_manage_accomplishments' => $staffId > 0,
             'overview_nav' => $overviewNav,
+            'addresses' => $addresses,
         ];
     }
 
     private function _staff_overview_data()
     {
         $staffId = (int) $this->session->userdata('staff_id');
+        $hasStaffProfile = $staffId > 0;
+        $accomplishments = $hasStaffProfile
+            ? $this->Accomplishment_model->recent_for_staff($staffId, 10)
+            : [];
 
         $stats = [
             'total_staff'           => $this->Staff_model->count_active(),
             'total_offices'         => $this->Office_model->count_all(),
-            'total_accomplishments' => $staffId > 0 ? $this->Accomplishment_model->count_for_staff($staffId) : 0,
-            'public_accomplishments'=> $staffId > 0 ? $this->Accomplishment_model->count_public_for_staff($staffId) : 0,
+            'total_accomplishments' => $hasStaffProfile ? $this->Accomplishment_model->count_for_staff($staffId) : 0,
+            'public_accomplishments'=> $hasStaffProfile ? $this->Accomplishment_model->count_public_for_staff($staffId) : 0,
         ];
 
         $dashboardNav = [
@@ -393,6 +400,8 @@ class Login extends CI_Controller
         return [
             'dashboard_nav' => $dashboardNav,
             'stats'         => $stats,
+            'accomplishments' => $accomplishments,
+            'has_staff_profile' => $hasStaffProfile,
         ];
     }
 

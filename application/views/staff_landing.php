@@ -244,7 +244,9 @@
         }
 
         .search-panel {
-            margin-bottom: 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto 20px;
             padding: 24px;
             background: linear-gradient(to bottom right, #ffffff, #f8fafc);
             border-radius: 14px;
@@ -252,17 +254,48 @@
                 0 1px 3px rgba(0, 0, 0, 0.05),
                 0 6px 24px rgba(71, 85, 105, 0.08);
             border: 1px solid rgba(226, 232, 240, 0.8);
+            max-height: 320px;
+            opacity: 1;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease,
+                margin 0.3s ease, box-shadow 0.3s ease, border-width 0.3s ease;
         }
+
+        /* Smoothly hide it */
+        .search-panel.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            box-shadow: none;
+            border-width: 0;
+            pointer-events: none;
+        }
+
 
         .search-row {
             display: grid;
-            grid-template-columns: 1fr 1fr auto;
+            grid-template-columns: 1fr;
             gap: 16px;
             align-items: end;
         }
 
         .search-group {
             min-width: 0;
+        }
+
+        /* Visually hidden label (for accessibility only) */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
         label {
@@ -300,8 +333,7 @@
         }
 
         .search-btn-wrap {
-            display: flex;
-            align-items: flex-end;
+            display: none;
         }
 
         button[type="submit"] {
@@ -459,6 +491,92 @@
             border: 1px solid rgba(59, 130, 246, 0.15);
         }
 
+        .accomplishment-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #1f2937;
+            font-size: 0.75rem;
+            border: 1px solid #cbd5e1;
+            white-space: nowrap;
+        }
+
+        .staff-card-large {
+            padding: 26px;
+        }
+
+        .search-icon-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            height: 44px;
+            min-width: 44px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: none;
+            background: #3b82f6;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+            transition:
+                padding 0.25s ease,
+                min-width 0.25s ease,
+                box-shadow 0.25s ease,
+                transform 0.15s ease,
+                background 0.25s ease;
+        }
+
+        /* Icon */
+        .search-icon-btn .icon {
+            font-size: 1.1rem;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        /* Label – hidden by default */
+        .search-icon-btn .label {
+            max-width: 0;
+            opacity: 0;
+            margin-left: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            transition:
+                max-width 0.25s ease,
+                opacity 0.2s ease,
+                margin-left 0.25s ease;
+        }
+
+        /* Hover: subtle lift, but keep “small pill” look */
+        .search-icon-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 24px rgba(59, 130, 246, 0.45);
+        }
+
+        /* When expanded (clicked / active) show “Add New Project”-style */
+        .search-icon-btn.expanded {
+            min-width: 210px;
+            padding: 0 22px;
+        }
+
+        /* Label becomes visible when expanded */
+        .search-icon-btn.expanded .label {
+            max-width: 150px;
+            opacity: 1;
+            margin-left: 10px;
+        }
+
+        /* Slight icon zoom when expanded */
+        .search-icon-btn.expanded .icon {
+            transform: scale(1.05);
+        }
+
+
         .empty-state {
             text-align: center;
             color: #64748b;
@@ -549,10 +667,6 @@
                 grid-template-columns: 1fr;
             }
 
-            .search-btn-wrap {
-                width: 100%;
-            }
-
             button[type="submit"] {
                 width: 100%;
             }
@@ -566,8 +680,19 @@
 
 <body>
     <?php
-    $hasQuery        = (!empty($search) || !empty($office));
+    $selectedStaffId = isset($staff_id) ? (int) $staff_id : 0;
+    $hasQuery        = (!empty($search) || $selectedStaffId > 0);
     $gridPanelClass  = $hasQuery ? '' : 'collapsed';
+    $collapseSearchPanel = $selectedStaffId > 0;
+    $selectedStaff = null;
+    if ($selectedStaffId > 0 && !empty($staff)) {
+        foreach ($staff as $candidate) {
+            if ((int) $candidate->staff_id === $selectedStaffId) {
+                $selectedStaff = $candidate;
+                break;
+            }
+        }
+    }
     ?>
 
     <div class="page-wrapper">
@@ -583,7 +708,6 @@
                 <div class="profile-showcase">
                     <div class="profile-avatar-large" id="showcase-avatar">ST</div>
                     <h2 class="profile-name-large" id="showcase-name">Staff Member</h2>
-                    <div class="profile-position-large" id="showcase-position">Position</div>
                     <div class="profile-office-large" id="showcase-office">Office</div>
                     <div class="profile-location-large" id="showcase-location"></div>
                     <div class="profile-bio-large" id="showcase-bio"></div>
@@ -591,47 +715,52 @@
                 </div>
 
                 <div class="showcase-action">
-                    <button class="search-toggle-btn" id="show-search-btn">
-                        Search All Staff Members
+                    <button class="search-icon-btn" id="show-search-btn" aria-label="Search staff">
+                        <span class="icon">🔍</span>
+                        <span class="label">Search staff</span>
                     </button>
+
                 </div>
             </div>
         </div>
 
         <!-- Search and Grid Mode -->
         <div class="search-grid-mode <?= $hasQuery ? 'active' : ''; ?>" id="search-grid-mode">
-            <div class="back-to-showcase">
+            <div class="back-to-showcase d-flex" style="justify-content: space-between;align-items:center;max-width:1200px;margin:0 auto 20px;">
                 <button class="back-btn" id="back-to-showcase-btn">
                     ← Back to Showcase
                 </button>
+                <button class="search-icon-btn" id="toggle-search-panel" aria-label="Toggle search">
+                    <span class="icon">🔍</span>
+                    <span class="label">Search staff</span>
+                </button>
+
             </div>
 
-            <div class="search-panel">
-                <form method="get">
+            <!-- Search panel is collapsed by default; opens when 🔍 is clicked -->
+            <div class="search-panel collapsed">
+                <form method="get" id="staffSearchForm">
                     <div class="search-row">
                         <div class="search-group">
-                            <label>Search by name or position</label>
-                            <input type="text"
-                                name="q"
-                                placeholder="e.g. Juan, Specialist, Clerk"
-                                value="<?= isset($search) ? html_escape($search) : ''; ?>">
-                        </div>
-                        <div class="search-group">
-                            <label>Office</label>
-                            <select name="office">
-                                <option value="">All offices</option>
-                                <?php if (!empty($offices)): ?>
-                                    <?php foreach ($offices as $o): ?>
-                                        <option value="<?= (int) $o->id; ?>"
-                                            <?= (isset($office) && $office == $o->id) ? 'selected' : ''; ?>>
-                                            <?= html_escape($o->name); ?>
+                            <!-- label visually hidden for accessibility -->
+                            <label for="staffSelect" class="sr-only">Search by name</label>
+                            <select name="staff_id"
+                                id="staffSelect"
+                                data-placeholder="Search staff by name">
+                                <option value=""></option>
+                                <?php if (!empty($staff_options)): ?>
+                                    <?php foreach ($staff_options as $opt): ?>
+                                        <?php
+                                        $fullname = trim(($opt->first_name ?? '') . ' ' . ($opt->last_name ?? ''));
+                                        $label = $fullname !== '' ? $fullname : 'Unnamed';
+                                        ?>
+                                        <option value="<?= (int) $opt->staff_id; ?>"
+                                            <?= $selectedStaffId === (int) $opt->staff_id ? 'selected' : ''; ?>>
+                                            <?= html_escape($label); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
-                        </div>
-                        <div class="search-btn-wrap">
-                            <button type="submit">Search</button>
                         </div>
                     </div>
                 </form>
@@ -642,7 +771,78 @@
             </div>
 
             <div class="grid-panel <?= $gridPanelClass; ?>">
-                <?php if (!empty($staff)): ?>
+                <?php if ($selectedStaff): ?>
+                    <div class="single-card-wrapper" style="max-width: 960px; margin: 0 auto;">
+                        <div class="staff-card staff-card-large" style="width:100%;">
+                            <div class="staff-avatar" style="width:82px;height:82px;font-size:1.6rem;">
+                                <?php if (!empty($selectedStaff->photo)): ?>
+                                    <img src="<?= base_url('upload/staff/' . $selectedStaff->photo); ?>" alt="Photo">
+                                <?php else: ?>
+                                    <?php
+                                    $initials = '';
+                                    if (!empty($selectedStaff->first_name)) {
+                                        $initials .= mb_substr($selectedStaff->first_name, 0, 1);
+                                    }
+                                    if (!empty($selectedStaff->last_name)) {
+                                        $initials .= mb_substr($selectedStaff->last_name, 0, 1);
+                                    }
+                                    echo html_escape($initials ?: 'ST');
+                                    ?>
+                                <?php endif; ?>
+                            </div>
+                            <div style="flex:1;">
+                                <div class="staff-name" style="font-size:1.4rem;">
+                                    <?= html_escape(trim($selectedStaff->first_name . ' ' . $selectedStaff->last_name)); ?>
+                                </div>
+                                <?php if (!empty($selectedStaff->City) || !empty($selectedStaff->Province) || !empty($selectedStaff->Brgy)): ?>
+                                    <div class="staff-meta">
+                                        <small>
+                                            <?= html_escape($selectedStaff->Brgy); ?>
+                                            <?= $selectedStaff->Brgy ? ', ' : ''; ?>
+                                            <?= html_escape($selectedStaff->City); ?>
+                                            <?= $selectedStaff->City ? ', ' : ''; ?>
+                                            <?= html_escape($selectedStaff->Province); ?>
+                                        </small>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div style="margin-top:14px;">
+                                    <?php if (!empty($selected_accomplishments)): ?>
+                                        <ul class="list-unstyled mb-0">
+                                            <?php foreach ($selected_accomplishments as $item): ?>
+                                                <?php
+                                                $start = $item->start_date ? htmlspecialchars($item->start_date) : 'TBD';
+                                                $end = $item->end_date ? htmlspecialchars($item->end_date) : 'Ongoing';
+                                                ?>
+                                                <li class="py-2 border-bottom">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <div class="font-weight-semibold"><?= htmlspecialchars($item->title); ?></div>
+                                                            <div class="text-muted small">
+                                                                <?= htmlspecialchars($item->category ?: 'General'); ?> · <?= $start; ?> → <?= $end; ?>
+                                                            </div>
+                                                            <?php if (!empty($item->location) || !empty($item->description)): ?>
+                                                                <div class="text-muted small">
+                                                                    <?= htmlspecialchars($item->location); ?>
+                                                                    <?php if (!empty($item->description)): ?>
+                                                                        <div><?= nl2br(htmlspecialchars($item->description)); ?></div>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <span class="accomplishment-pill"><?= $item->is_public ? 'Public' : 'Private'; ?></span>
+                                                    </div>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php else: ?>
+                                        <p class="text-muted mb-0">No public entries yet for this staff.</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php elseif (!empty($staff)): ?>
                     <div class="staff-grid">
                         <?php foreach ($staff as $s): ?>
                             <div class="staff-card">
@@ -667,7 +867,6 @@
                                         <?= html_escape(trim($s->first_name . ' ' . $s->last_name)); ?>
                                     </div>
                                     <div class="staff-meta">
-                                        <?= html_escape($s->position_title); ?><br>
                                         <?= html_escape($s->office_name); ?>
                                         <?php if (!empty($s->City) || !empty($s->Province) || !empty($s->Brgy)): ?>
                                             <br>
@@ -686,6 +885,13 @@
                                         </div>
                                     <?php endif; ?>
                                     <div class="staff-tag">Public profile</div>
+                                    <div style="margin-top:8px;">
+                                        <a href="<?= site_url('staffdirectory/profile/' . (int) $s->staff_id); ?>"
+                                            class="btn btn-sm btn-outline-primary"
+                                            style="padding:6px 10px;border-radius:8px;text-decoration:none;">
+                                            View details
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -707,9 +913,9 @@
                                 if (!empty($staff)) {
                                     foreach ($staff as $s) {
                                         $simple[] = [
+                                            'id'             => $s->staff_id,
                                             'first_name'      => $s->first_name,
                                             'last_name'       => $s->last_name,
-                                            'position_title'  => $s->position_title,
                                             'office_name'     => $s->office_name,
                                             'Brgy'            => $s->Brgy,
                                             'City'            => $s->City,
@@ -723,15 +929,17 @@
                                 ?>;
 
             const hasQuery = <?= $hasQuery ? 'true' : 'false'; ?>;
+            const collapseSearchPanel = <?= $collapseSearchPanel ? 'true' : 'false'; ?>;
 
             const showcaseMode = document.getElementById('showcase-mode');
             const searchGridMode = document.getElementById('search-grid-mode');
             const showSearchBtn = document.getElementById('show-search-btn');
             const backToShowcaseBtn = document.getElementById('back-to-showcase-btn');
+            const toggleSearchPanelBtn = document.getElementById('toggle-search-panel');
+            const searchPanel = document.querySelector('.search-panel');
 
             const showcaseAvatar = document.getElementById('showcase-avatar');
             const showcaseName = document.getElementById('showcase-name');
-            const showcasePosition = document.getElementById('showcase-position');
             const showcaseOffice = document.getElementById('showcase-office');
             const showcaseLocation = document.getElementById('showcase-location');
             const showcaseBio = document.getElementById('showcase-bio');
@@ -745,7 +953,6 @@
             function renderShowcase(index) {
                 if (!staffData || staffData.length === 0) {
                     showcaseName.textContent = 'No staff data';
-                    showcasePosition.textContent = '';
                     showcaseOffice.textContent = '';
                     showcaseLocation.textContent = '';
                     showcaseBio.textContent = '';
@@ -772,7 +979,6 @@
                     showcaseAvatar.textContent = initials || 'ST';
                 }
 
-                showcasePosition.textContent = s.position_title || 'Position';
                 showcaseOffice.textContent = s.office_name || 'Office';
 
                 const addrParts = [];
@@ -803,9 +1009,12 @@
                     clearInterval(timer);
                     timer = null;
                 }
+                showSearchBtn.classList.add('expanded');
                 showcaseMode.classList.add('hidden');
                 setTimeout(() => {
                     searchGridMode.classList.add('active');
+
+                    // Keep grid behavior as before
                     if (gridPanel) {
                         if (!hasQuery) {
                             gridPanel.classList.add(gridCollapsedClass);
@@ -813,8 +1022,18 @@
                             gridPanel.classList.remove(gridCollapsedClass);
                         }
                     }
+
                     if (gridPlaceholder && hasQuery) {
                         gridPlaceholder.classList.add('hidden');
+                    }
+
+                    // When we click the showcase search icon, open the dropdown panel
+                    if (searchPanel) {
+                        searchPanel.classList.remove('collapsed');
+                    }
+
+                    if (toggleSearchPanelBtn) {
+                        toggleSearchPanelBtn.classList.add('expanded');
                     }
                 }, 300);
             }
@@ -823,22 +1042,68 @@
                 searchGridMode.classList.remove('active');
                 setTimeout(() => {
                     showcaseMode.classList.remove('hidden');
+                    if (showSearchBtn) {
+                        showSearchBtn.classList.remove('expanded');
+                    }
+                    if (toggleSearchPanelBtn) {
+                        toggleSearchPanelBtn.classList.remove('expanded');
+                    }
                     startSlideshow();
                 }, 300);
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
             }
 
             document.addEventListener('DOMContentLoaded', function() {
                 if (hasQuery) {
+                    // If loaded with a query (staff_id in URL), go straight to search mode.
                     showcaseMode.classList.add('hidden');
                     searchGridMode.classList.add('active');
+                    // Keep the panel collapsed initially for the "professional" look
+                    if (searchPanel && collapseSearchPanel) {
+                        searchPanel.classList.add('collapsed');
+                    }
+                    if (showSearchBtn) {
+                        showSearchBtn.classList.add('expanded');
+                    }
+                    if (toggleSearchPanelBtn) {
+                        toggleSearchPanelBtn.classList.add('expanded');
+                    }
                 } else {
                     startSlideshow();
                 }
 
                 showSearchBtn.addEventListener('click', showSearchMode);
                 backToShowcaseBtn.addEventListener('click', showShowcaseMode);
+
+                if (toggleSearchPanelBtn && searchPanel) {
+                    toggleSearchPanelBtn.addEventListener('click', function() {
+                        const isCollapsed = searchPanel.classList.toggle('collapsed');
+                        // expand button when panel is visible
+                        this.classList.toggle('expanded', !isCollapsed);
+                    });
+                }
+
             });
         })();
+    </script>
+
+    <link rel="stylesheet" href="<?= base_url('assets/libs/select2/select2.min.css'); ?>">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="<?= base_url('assets/libs/select2/select2.min.js'); ?>"></script>
+    <script>
+        $(function() {
+            var $staffSelect = $('#staffSelect');
+            $staffSelect.select2({
+                placeholder: $staffSelect.data('placeholder'),
+                allowClear: true,
+                width: '100%'
+            });
+            $staffSelect.on('change', function() {
+                $('#staffSearchForm').submit();
+            });
+        });
     </script>
 </body>
 

@@ -8,65 +8,55 @@ $fullName = $this->session->userdata('full_name') ?: $this->session->userdata('u
 $role     = $this->session->userdata('role') ?: 'staff';
 $roleLabel = ucwords(strtolower($role));
 $isAdmin = strtolower((string) $role) === 'admin';
+$accomplishments = !empty($accomplishments) ? $accomplishments : [];
+$hasStaffProfile = isset($has_staff_profile) ? (bool) $has_staff_profile : true;
 ?>
 
 <style>
     .overview-header {
-        border-radius: 18px;
-        padding: 18px 24px;
-        background: linear-gradient(135deg, #0ea5e9, #22c55e);
-        color: #fff;
-        box-shadow: 0 20px 35px rgba(15, 23, 42, 0.25);
+        border-radius: 12px;
+        padding: 16px 20px;
+        background: #f8fafc;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
     }
 
     .overview-header h4 {
-        margin-bottom: 4px;
-        font-weight: 700;
+        margin-bottom: 2px;
+        font-weight: 600;
         letter-spacing: -0.01em;
     }
 
-    .overview-header small {
-        opacity: 0.85;
-    }
-
     .overview-actions .btn {
-        min-width: 170px;
-        border-radius: 999px;
+        min-width: 140px;
+        border-radius: 6px;
     }
 
     .stat-card {
-        border-radius: 18px;
-        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-        border: none;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
     }
 
     .stat-card .stat-label {
-        font-size: 0.78rem;
-        letter-spacing: 0.1em;
+        font-size: 0.82rem;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        color: #94a3b8;
+        color: #6b7280;
         margin-bottom: 6px;
     }
 
     .stat-card .stat-value {
-        font-size: 2.5rem;
+        font-size: 2rem;
         font-weight: 700;
         line-height: 1;
         color: #0f172a;
     }
 
-    .overview-summary {
-        border-radius: 14px;
+    .simple-card {
         border: 1px solid #e2e8f0;
-        padding: 16px;
-        background: #fff;
-        box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.04);
-    }
-
-    .overview-summary strong {
-        display: block;
-        font-size: 0.95rem;
-        margin-bottom: 4px;
+        border-radius: 12px;
+        box-shadow: none;
     }
 </style>
 
@@ -85,34 +75,12 @@ $isAdmin = strtolower((string) $role) === 'admin';
                         <div class="col-12">
                             <div class="page-title-box">
                                 <h4 class="page-title mb-0">Office Tracker – <?= html_escape($roleLabel); ?> Dashboard</h4>
-                                <div class="page-title-right text-muted small">
-                                    <?= html_escape($fullName); ?>
-                                </div>
+
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="overview-header d-flex flex-wrap align-items-center justify-content-between gap-3">
-                                <div>
-                                    <h4 class="mb-0">Key performance indicators</h4>
-                                    <small>Quick insight into the teams you manage and your recent activity.</small>
-                                </div>
-                                <div class="overview-actions d-flex flex-wrap gap-2">
-                                    <?php if (!empty($dashboard_nav)): ?>
-                                        <?php foreach ($dashboard_nav as $nav): ?>
-                                            <a class="btn btn-outline-light btn-sm" href="<?= html_escape($nav['target']); ?>">
-                                                <?= html_escape($nav['label']); ?>
-                                            </a>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <a class="btn btn-outline-light btn-sm" href="<?= site_url('dashboard'); ?>">Refresh</a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <?php
                     $stats = isset($stats) ? (array) $stats : [];
@@ -147,14 +115,57 @@ $isAdmin = strtolower((string) $role) === 'admin';
                     </section>
 
                     <section class="mt-3">
-                        <div class="overview-summary">
-                            <strong>Need to act?</strong>
-                            <p class="mb-1">
-                                Run the quick actions from the navigation: log accomplishments when you have new achievements, or register a colleague to keep the roster up to date.
-                            </p>
-                            <small class="text-muted">
-                                Stats refresh when you log a new accomplishment or add staff.
-                            </small>
+                        <div class="card simple-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <h5 class="mb-1">My accomplishments</h5>
+                                        <small class="text-muted">Recent entries you added from the sidebar.</small>
+                                    </div>
+
+                                </div>
+
+                                <?php if (!$hasStaffProfile): ?>
+                                    <div class="alert alert-warning mb-0">
+                                        Link this account to a staff profile to start logging accomplishments.
+                                    </div>
+                                <?php elseif (!empty($accomplishments)): ?>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover table-sm dt-responsive nowrap mb-0"
+                                            id="accomplishmentsOverviewTable"
+                                            style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Category</th>
+                                                    <th>Dates</th>
+                                                    <th>Visibility</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($accomplishments as $item): ?>
+                                                    <?php
+                                                    $start = $item->start_date ? htmlspecialchars($item->start_date) : 'TBD';
+                                                    $end = $item->end_date ? htmlspecialchars($item->end_date) : 'Ongoing';
+                                                    $visibilityClass = $item->is_public ? 'badge-success' : 'badge-secondary';
+                                                    $visibilityText = $item->is_public ? 'Public' : 'Private';
+                                                    ?>
+                                                    <tr>
+                                                        <td><?= htmlspecialchars($item->title); ?></td>
+                                                        <td><?= htmlspecialchars($item->category ?: 'General'); ?></td>
+                                                        <td><?= $start; ?> → <?= $end; ?></td>
+                                                        <td>
+                                                            <span class="badge <?= $visibilityClass; ?>"><?= $visibilityText; ?></span>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="text-muted mb-0">No accomplishments yet. Add your first one to see it here.</p>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </section>
 
@@ -169,6 +180,35 @@ $isAdmin = strtolower((string) $role) === 'admin';
     </div>
 
     <?php include('includes/footer_plugins.php'); ?>
+    <script>
+        $(function() {
+            var $overviewTable = $('#accomplishmentsOverviewTable');
+            if ($overviewTable.length && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable($overviewTable)) {
+                    $overviewTable.DataTable().destroy();
+                }
+
+                $overviewTable.DataTable({
+                    responsive: true,
+                    pageLength: 5,
+                    lengthChange: false,
+                    ordering: true,
+                    autoWidth: false,
+                    pagingType: 'simple',
+                    language: {
+                        search: '',
+                        searchPlaceholder: 'Search...'
+                    },
+                    columnDefs: [{
+                        targets: -1,
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    }]
+                });
+            }
+        });
+    </script>
 
 </body>
 

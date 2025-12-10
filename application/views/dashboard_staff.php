@@ -11,6 +11,7 @@ $accomplishments = !empty($accomplishments) ? $accomplishments : [];
 $accomplishment_categories = !empty($accomplishment_categories) ? $accomplishment_categories : [];
 $canManage = !empty($can_manage_accomplishments);
 $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'add';
+$addresses = !empty($addresses) ? $addresses : [];
 ?>
 
 <style>
@@ -65,15 +66,15 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
                     </div>
 
                     <div class="row">
-                        <div class="col-12">
-                            <div class="card table-card">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-between mb-2">
-                                        <div>
-                                            <h5 class="card-title mb-1">My accomplishments</h5>
-                                            <small class="text-muted">Entries saved under your profile.</small>
-                                        </div>
-                                        <div>
+                    <div class="col-12">
+                        <div class="card table-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <h5 class="card-title mb-1">My accomplishments</h5>
+                                        <small class="text-muted">Entries saved under your profile.</small>
+                                    </div>
+                                    <div>
                                             <button type="button"
                                                 class="btn btn-primary btn-sm"
                                                 id="btnAddAccomplishment"
@@ -88,67 +89,71 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
                                             Your user account is not linked to a staff profile yet. Adding accomplishments requires a staff record.
                                         </div>
                                     <?php endif; ?>
-                                    <table class="table table-hover table-sm mb-0" id="accomplishmentsTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Title</th>
-                                                <th>Category</th>
-                                                <th>Dates</th>
-                                                <th>Visibility</th>
-                                                <th style="width: 150px;">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if (!empty($accomplishments)): ?>
-                                                <?php foreach ($accomplishments as $accomplishment): ?>
-                                                    <?php
-                                                    $start = $accomplishment->start_date ? htmlspecialchars($accomplishment->start_date) : 'TBD';
-                                                    $end = $accomplishment->end_date ? htmlspecialchars($accomplishment->end_date) : 'Ongoing';
-                                                    $visibilityClass = $accomplishment->is_public ? 'badge-success' : 'badge-secondary';
-                                                    $visibilityText = $accomplishment->is_public ? 'Public' : 'Private';
-                                                    ?>
-                                                    <tr>
-                                                        <td><?= htmlspecialchars($accomplishment->title); ?></td>
-                                                        <td><?= htmlspecialchars($accomplishment->category ?: 'General'); ?></td>
-                                                        <td><?= $start; ?> → <?= $end; ?></td>
-                                                        <td>
-                                                            <span class="badge <?= $visibilityClass; ?>"><?= $visibilityText; ?></span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="btn-group" role="group">
-                                                                <button type="button"
-                                                                    class="btn btn-outline-primary btn-sm btn-edit-accomplishment"
-                                                                    data-id="<?= (int) $accomplishment->id; ?>"
-                                                                    data-title="<?= htmlspecialchars($accomplishment->title, ENT_QUOTES); ?>"
-                                                                    data-category="<?= htmlspecialchars($accomplishment->category, ENT_QUOTES); ?>"
-                                                                    data-location="<?= htmlspecialchars($accomplishment->location, ENT_QUOTES); ?>"
-                                                                    data-description="<?= htmlspecialchars($accomplishment->description, ENT_QUOTES); ?>"
-                                                                    data-start="<?= html_escape($accomplishment->start_date); ?>"
-                                                                    data-end="<?= html_escape($accomplishment->end_date); ?>"
-                                                                    data-public="<?= $accomplishment->is_public ? '1' : '0'; ?>">
-                                                                    Edit
-                                                                </button>
-                                                                <form class="accomplishment-delete-form"
-                                                                    action="<?= site_url('login/delete_accomplishment/' . (int) $accomplishment->id); ?>"
-                                                                    method="post">
-                                                                    <button type="submit"
-                                                                        class="btn btn-outline-danger btn-sm">
-                                                                        Delete
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover table-sm dt-responsive nowrap mb-0"
+                                            id="accomplishmentsTable"
+                                            style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Category</th>
+                                                    <th>Dates</th>
+                                                    <th>Visibility</th>
+                                                    <th style="width: 150px;">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php if (!empty($accomplishments)): ?>
+                                                    <?php foreach ($accomplishments as $accomplishment): ?>
+                                                        <?php
+                                                        $start = $accomplishment->start_date ? htmlspecialchars($accomplishment->start_date) : 'TBD';
+                                                        $end = $accomplishment->end_date ? htmlspecialchars($accomplishment->end_date) : 'Ongoing';
+                                                        $visibilityClass = $accomplishment->is_public ? 'badge-success' : 'badge-secondary';
+                                                        $visibilityText = $accomplishment->is_public ? 'Public' : 'Private';
+                                                        ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($accomplishment->title); ?></td>
+                                                            <td><?= htmlspecialchars($accomplishment->category ?: 'General'); ?></td>
+                                                            <td><?= $start; ?> → <?= $end; ?></td>
+                                                            <td>
+                                                                <span class="badge <?= $visibilityClass; ?>"><?= $visibilityText; ?></span>
+                                                            </td>
+                                                            <td>
+                                                                <div class="btn-group" role="group">
+                                                                    <button type="button"
+                                                                        class="btn btn-outline-primary btn-sm btn-edit-accomplishment"
+                                                                        data-id="<?= (int) $accomplishment->id; ?>"
+                                                                        data-title="<?= htmlspecialchars($accomplishment->title, ENT_QUOTES); ?>"
+                                                                        data-category="<?= htmlspecialchars($accomplishment->category, ENT_QUOTES); ?>"
+                                                                        data-location="<?= htmlspecialchars($accomplishment->location, ENT_QUOTES); ?>"
+                                                                        data-description="<?= htmlspecialchars($accomplishment->description, ENT_QUOTES); ?>"
+                                                                        data-start="<?= html_escape($accomplishment->start_date); ?>"
+                                                                        data-end="<?= html_escape($accomplishment->end_date); ?>"
+                                                                        data-public="<?= $accomplishment->is_public ? '1' : '0'; ?>">
+                                                                        Edit
                                                                     </button>
-                                                                </form>
-                                                            </div>
+                                                                    <form class="accomplishment-delete-form"
+                                                                        action="<?= site_url('login/delete_accomplishment/' . (int) $accomplishment->id); ?>"
+                                                                        method="post">
+                                                                        <button type="submit"
+                                                                            class="btn btn-outline-danger btn-sm">
+                                                                            Delete
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted">
+                                                            No accomplishments yet.
                                                         </td>
                                                     </tr>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted">
-                                                        No accomplishments yet.
-                                                    </td>
-                                                </tr>
-                                            <?php endif; ?>
-                                        </tbody>
-                                    </table>
+                                                <?php endif; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -204,12 +209,33 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
                                 </div>
                             </div>
                             <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label for="accomplishmentLocation">Location</label>
-                                    <input type="text" class="form-control form-control-sm"
-                                        id="accomplishmentLocation"
-                                        name="location">
+                                <div class="form-group col-md-4">
+                                    <label for="accomplishmentProvince">Province <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-sm"
+                                        id="accomplishmentProvince"
+                                        required>
+                                        <option value="">Select province</option>
+                                    </select>
                                 </div>
+                                <div class="form-group col-md-4">
+                                    <label for="accomplishmentCity">City / Municipality <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-sm"
+                                        id="accomplishmentCity"
+                                        required>
+                                        <option value="">Select city / municipality</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="accomplishmentBarangay">Barangay <span class="text-danger">*</span></label>
+                                    <select class="form-control form-control-sm"
+                                        id="accomplishmentBarangay"
+                                        required>
+                                        <option value="">Select barangay</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <input type="hidden" name="location" id="accomplishmentLocation" value="">
+                            <div class="form-row">
                                 <div class="form-group col-md-3">
                                     <label for="accomplishmentStart">Start Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control form-control-sm"
@@ -261,16 +287,26 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
         $(function() {
             var $table = $('#accomplishmentsTable');
             var dataTable = null;
-            if ($.fn.DataTable) {
+            if ($table.length && $.fn.DataTable) {
+                if ($.fn.DataTable.isDataTable($table)) {
+                    $table.DataTable().destroy();
+                }
                 dataTable = $table.DataTable({
                     responsive: true,
                     pageLength: 10,
                     lengthChange: false,
                     ordering: true,
+                    autoWidth: false,
+                    pagingType: 'simple',
+                    language: {
+                        search: '',
+                        searchPlaceholder: 'Search accomplishments'
+                    },
                     columnDefs: [{
                         targets: -1,
                         orderable: false,
-                        searchable: false
+                        searchable: false,
+                        className: 'text-center'
                     }]
                 });
             } else {
@@ -287,6 +323,110 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
             var $addBtn = $('#btnAddAccomplishment');
             var saveAction = $form.data('save-action');
             var updateAction = $form.data('update-action');
+            var addressList = <?php
+                echo json_encode(array_map(function ($row) {
+                    return [
+                        'id' => (int) $row->AddID,
+                        'province' => $row->Province,
+                        'city' => $row->City,
+                        'barangay' => $row->Brgy,
+                    ];
+                }, $addresses));
+            ?>;
+
+            var $province = $('#accomplishmentProvince');
+            var $city = $('#accomplishmentCity');
+            var $barangay = $('#accomplishmentBarangay');
+            var $locationField = $('#accomplishmentLocation');
+
+            function populateProvinces() {
+                var provinces = Array.from(new Set(addressList.map(function(item) { return item.province; }))).sort();
+                $province.empty().append($('<option>').val('').text('Select province'));
+                provinces.forEach(function(prov) {
+                    $province.append($('<option>').val(prov).text(prov));
+                });
+            }
+
+            function populateCities(province) {
+                $city.empty().append($('<option>').val('').text('Select city / municipality'));
+                $barangay.empty().append($('<option>').val('').text('Select barangay'));
+                if (!province) { return; }
+                var cities = Array.from(new Set(addressList
+                    .filter(function(item) { return item.province === province; })
+                    .map(function(item) { return item.city; }))).sort();
+                cities.forEach(function(city) {
+                    $city.append($('<option>').val(city).text(city));
+                });
+            }
+
+            function populateBarangays(province, city) {
+                $barangay.empty().append($('<option>').val('').text('Select barangay'));
+                if (!province || !city) { return; }
+                var brgys = addressList
+                    .filter(function(item) { return item.province === province && item.city === city; })
+                    .map(function(item) { return item.barangay; })
+                    .filter(function(value, index, self) { return self.indexOf(value) === index; })
+                    .sort();
+                brgys.forEach(function(brgy) {
+                    $barangay.append($('<option>').val(brgy).text(brgy));
+                });
+            }
+
+            function updateLocationField() {
+                var province = $province.val();
+                var city = $city.val();
+                var brgy = $barangay.val();
+                var composed = '';
+                if (province || city || brgy) {
+                    composed = [province, city, brgy].filter(Boolean).join(' / ');
+                }
+                $locationField.val(composed);
+            }
+
+            function setAddressSelections(province, city, brgy) {
+                populateProvinces();
+                if (province) {
+                    $province.val(province);
+                    populateCities(province);
+                } else {
+                    populateCities('');
+                }
+                if (province && city) {
+                    $city.val(city);
+                    populateBarangays(province, city);
+                } else {
+                    populateBarangays('', '');
+                }
+                if (province && city && brgy) {
+                    $barangay.val(brgy);
+                }
+                updateLocationField();
+            }
+
+            function guessAddressFromLocation(locationText) {
+                if (!locationText) {
+                    return null;
+                }
+                var normalized = locationText.toLowerCase().trim();
+                var match = addressList.find(function(item) {
+                    var variants = [
+                        (item.province + ' / ' + item.city + ' / ' + item.barangay).toLowerCase(),
+                        (item.province + ' - ' + item.city + ' - ' + item.barangay).toLowerCase(),
+                        (item.province + ', ' + item.city + ', ' + item.barangay).toLowerCase(),
+                        (item.province + ' ' + item.city + ' ' + item.barangay).toLowerCase(),
+                    ];
+                    return variants.indexOf(normalized) !== -1;
+                });
+                if (match) {
+                    return match;
+                }
+                var parts = locationText.split(/[-,/]/).map(function(part) { return part.trim(); }).filter(Boolean);
+                return {
+                    province: parts[0] || '',
+                    city: parts[1] || '',
+                    barangay: parts[2] || ''
+                };
+            }
 
             function resetForm() {
                 $form.attr('action', saveAction);
@@ -295,6 +435,7 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
                 $visibility.val('1');
                 $submitBtn.text('Save entry');
                 $modalTitle.text('Add accomplishment');
+                setAddressSelections('', '', '');
             }
 
             $addBtn.on('click', function() {
@@ -310,10 +451,16 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
                 $idField.val($btn.data('id'));
                 $('#accomplishmentTitle').val($btn.data('title'));
                 $('#accomplishmentCategory').val($btn.data('category'));
-                $('#accomplishmentLocation').val($btn.data('location'));
                 $('#accomplishmentDescription').val($btn.data('description'));
                 $('#accomplishmentStart').val($btn.data('start'));
                 $('#accomplishmentEnd').val($btn.data('end'));
+                var guessed = guessAddressFromLocation($btn.data('location'));
+                if (guessed) {
+                    setAddressSelections(guessed.province, guessed.city, guessed.barangay);
+                } else {
+                    setAddressSelections('', '', '');
+                }
+                $('#accomplishmentLocation').val($btn.data('location'));
                 $visibility.val($btn.data('public'));
                 $submitBtn.text('Update entry');
                 $modalTitle.text('Edit accomplishment');
@@ -336,6 +483,29 @@ $autoOpenAdd = isset($_GET['open']) && strtolower((string) $_GET['open']) === 'a
 
             $modal.on('hidden.bs.modal', function() {
                 resetForm();
+            });
+
+            $province.on('change', function() {
+                populateCities($(this).val());
+                updateLocationField();
+            });
+
+            $city.on('change', function() {
+                populateBarangays($province.val(), $(this).val());
+                updateLocationField();
+            });
+
+            $barangay.on('change', function() {
+                updateLocationField();
+            });
+
+            $form.on('submit', function(event) {
+                updateLocationField();
+                if (!$province.val() || !$city.val() || !$barangay.val()) {
+                    event.preventDefault();
+                    alert('Please select province, city/municipality, and barangay.');
+                    return false;
+                }
             });
 
             // Auto-open add modal when triggered via sidebar link (e.g., ?open=add)

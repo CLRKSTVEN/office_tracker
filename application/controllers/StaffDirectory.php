@@ -20,16 +20,27 @@ class StaffDirectory extends CI_Controller
         // Safely read GET values as strings
         $rawSearch = $this->input->get('q', TRUE);
         $rawOffice = $this->input->get('office', TRUE);
+        $rawStaff  = $this->input->get('staff_id', TRUE);
 
         $search = trim((string) $rawSearch);
         $office = trim((string) $rawOffice);
+        $staffId = (int) $rawStaff;
+
+        // Build dropdown options (all public staff)
+        $staffOptions = $this->db
+            ->select('staff_id, first_name, last_name, position_title')
+            ->from('staff')
+            ->where('is_active', 1)
+            ->where('is_public', 1)
+            ->order_by('last_name', 'ASC')
+            ->get()
+            ->result();
 
         $this->db->select('
         s.staff_id,
         s.first_name,
         s.middle_name,
         s.last_name,
-        s.position_title,
         s.photo,
         s.short_bio,
         o.name      AS office_name,
@@ -52,12 +63,27 @@ class StaffDirectory extends CI_Controller
             $this->db->group_end();
         }
 
+        if ($staffId > 0) {
+            $this->db->where('s.staff_id', $staffId);
+        }
+
         if ($office !== '') {
             $this->db->where('o.id', (int) $office);
         }
 
         $this->db->order_by('s.last_name', 'ASC');
         $staffList = $this->db->get()->result();
+
+        $selectedAccomplishments = [];
+        if ($staffId > 0) {
+            $selectedAccomplishments = $this->db
+                ->where('staff_id', $staffId)
+                ->where('is_public', 1)
+                ->order_by('start_date', 'DESC')
+                ->order_by('updated_at', 'DESC')
+                ->get('staff_accomplishments')
+                ->result();
+        }
 
         $offices = $this->db->get('offices')->result();
 
@@ -66,6 +92,9 @@ class StaffDirectory extends CI_Controller
             'offices' => $offices,
             'search'  => $search,
             'office'  => $office,
+            'staff_id'=> $staffId,
+            'staff_options' => $staffOptions,
+            'selected_accomplishments' => $selectedAccomplishments,
         ];
 
         $this->load->view('staff_landing', $data);
