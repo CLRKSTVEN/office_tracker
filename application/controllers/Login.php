@@ -64,15 +64,24 @@ class Login extends CI_Controller
         return redirect('dashboard');
     }
 
-    /**
-     * Dashboard after login.
-     * Uses application/views/dashboard_admin.php
-     */
     public function dashboard()
     {
         $this->_require_login();
-        $this->load->view('dashboard_admin');
+
+        // Get role from session, default to 'staff' if empty
+        $role = $this->session->userdata('role') ?: 'staff';
+
+        if ($role === 'admin') {
+            // If you later create dashboard_admin.php, it will be used for admins
+            $view = 'dashboard_admin';
+        } else {
+            // All other roles (staff, etc.) go to this view
+            $view = 'dashboard_staff';
+        }
+
+        $this->load->view($view);
     }
+
 
     /**
      * Logout.
