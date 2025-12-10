@@ -236,131 +236,6 @@
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
 
-        .search-panel,
-        .grid-panel {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-        }
-
-        .search-panel {
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto 20px;
-            padding: 24px;
-            background: linear-gradient(to bottom right, #ffffff, #f8fafc);
-            border-radius: 14px;
-            box-shadow:
-                0 1px 3px rgba(0, 0, 0, 0.05),
-                0 6px 24px rgba(71, 85, 105, 0.08);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            max-height: 320px;
-            opacity: 1;
-            overflow: hidden;
-            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease,
-                margin 0.3s ease, box-shadow 0.3s ease, border-width 0.3s ease;
-        }
-
-        /* Smoothly hide it */
-        .search-panel.collapsed {
-            max-height: 0;
-            opacity: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            margin-bottom: 0;
-            box-shadow: none;
-            border-width: 0;
-            pointer-events: none;
-        }
-
-
-        .search-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            align-items: end;
-        }
-
-        .search-group {
-            min-width: 0;
-        }
-
-        /* Visually hidden label (for accessibility only) */
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-            letter-spacing: -0.01em;
-        }
-
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 11px 14px;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
-            font-size: 0.9rem;
-            outline: none;
-            background: #ffffff;
-            color: #1e293b;
-            transition: all 0.2s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        input[type="text"]:focus,
-        select:focus {
-            border-color: #3b82f6;
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        input[type="text"]::placeholder {
-            color: #cbd5e1;
-        }
-
-        .search-btn-wrap {
-            display: none;
-        }
-
-        button[type="submit"] {
-            padding: 11px 24px;
-            border-radius: 10px;
-            border: none;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: #ffffff;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            font-family: 'Inter', sans-serif;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        }
-
-        button[type="submit"]:active {
-            transform: translateY(0);
-        }
-
         .grid-panel {
             margin-bottom: 20px;
         }
@@ -576,6 +451,63 @@
             transform: scale(1.05);
         }
 
+        .search-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .search-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .search-modal-card {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.26);
+            min-width: 360px;
+            max-width: 520px;
+            width: 100%;
+        }
+
+        .search-modal-card h4 {
+            margin: 0 0 6px;
+            font-size: 1.1rem;
+            color: #0f172a;
+        }
+
+        .search-modal-card p {
+            margin: 0 0 14px;
+            color: #64748b;
+            font-size: 0.92rem;
+        }
+
+        .search-modal-card .select2-container {
+            width: 100% !important;
+        }
+
+        .search-modal-close {
+            background: none;
+            border: 0;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+
 
         .empty-state {
             text-align: center;
@@ -683,7 +615,6 @@
     $selectedStaffId = isset($staff_id) ? (int) $staff_id : 0;
     $hasQuery        = (!empty($search) || $selectedStaffId > 0);
     $gridPanelClass  = $hasQuery ? '' : 'collapsed';
-    $collapseSearchPanel = $selectedStaffId > 0;
     $selectedStaff = null;
     if ($selectedStaffId > 0 && !empty($staff)) {
         foreach ($staff as $candidate) {
@@ -719,7 +650,6 @@
                         <span class="icon">🔍</span>
                         <span class="label">Search staff</span>
                     </button>
-
                 </div>
             </div>
         </div>
@@ -730,40 +660,10 @@
                 <button class="back-btn" id="back-to-showcase-btn">
                     ← Back to Showcase
                 </button>
-                <button class="search-icon-btn" id="toggle-search-panel" aria-label="Toggle search">
+                <button class="search-icon-btn" id="open-search-modal" aria-label="Search staff">
                     <span class="icon">🔍</span>
                     <span class="label">Search staff</span>
                 </button>
-
-            </div>
-
-            <!-- Search panel is collapsed by default; opens when 🔍 is clicked -->
-            <div class="search-panel collapsed">
-                <form method="get" id="staffSearchForm">
-                    <div class="search-row">
-                        <div class="search-group">
-                            <!-- label visually hidden for accessibility -->
-                            <label for="staffSelect" class="sr-only">Search by name</label>
-                            <select name="staff_id"
-                                id="staffSelect"
-                                data-placeholder="Search staff by name">
-                                <option value=""></option>
-                                <?php if (!empty($staff_options)): ?>
-                                    <?php foreach ($staff_options as $opt): ?>
-                                        <?php
-                                        $fullname = trim(($opt->first_name ?? '') . ' ' . ($opt->last_name ?? ''));
-                                        $label = $fullname !== '' ? $fullname : 'Unnamed';
-                                        ?>
-                                        <option value="<?= (int) $opt->staff_id; ?>"
-                                            <?= $selectedStaffId === (int) $opt->staff_id ? 'selected' : ''; ?>>
-                                            <?= html_escape($label); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </select>
-                        </div>
-                    </div>
-                </form>
             </div>
 
             <div class="grid-placeholder <?= $hasQuery ? 'hidden' : ''; ?>">
@@ -906,6 +806,34 @@
 
     </div>
 
+    <div class="search-modal" id="searchModal">
+        <div class="search-modal-card">
+            <button class="search-modal-close" type="button" aria-label="Close search">×</button>
+            <h4>Select a staff member</h4>
+            <p>Pick a staff profile to view their public accomplishments.</p>
+            <form method="get" id="staffSearchForm">
+                <label for="staffSelect" class="sr-only">Search by name</label>
+                <select name="staff_id"
+                    id="staffSelect"
+                    data-placeholder="Search staff by name">
+                    <option value=""></option>
+                    <?php if (!empty($staff_options)): ?>
+                        <?php foreach ($staff_options as $opt): ?>
+                            <?php
+                            $fullname = trim(($opt->first_name ?? '') . ' ' . ($opt->last_name ?? ''));
+                            $label = $fullname !== '' ? $fullname : 'Unnamed';
+                            ?>
+                            <option value="<?= (int) $opt->staff_id; ?>"
+                                <?= $selectedStaffId === (int) $opt->staff_id ? 'selected' : ''; ?>>
+                                <?= html_escape($label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </form>
+        </div>
+    </div>
+
     <script>
         (function() {
             const staffData = <?php
@@ -929,14 +857,14 @@
                                 ?>;
 
             const hasQuery = <?= $hasQuery ? 'true' : 'false'; ?>;
-            const collapseSearchPanel = <?= $collapseSearchPanel ? 'true' : 'false'; ?>;
 
             const showcaseMode = document.getElementById('showcase-mode');
             const searchGridMode = document.getElementById('search-grid-mode');
             const showSearchBtn = document.getElementById('show-search-btn');
             const backToShowcaseBtn = document.getElementById('back-to-showcase-btn');
-            const toggleSearchPanelBtn = document.getElementById('toggle-search-panel');
-            const searchPanel = document.querySelector('.search-panel');
+            const openSearchModalBtn = document.getElementById('open-search-modal');
+            const searchModal = document.getElementById('searchModal');
+            const searchModalClose = document.querySelector('.search-modal-close');
 
             const showcaseAvatar = document.getElementById('showcase-avatar');
             const showcaseName = document.getElementById('showcase-name');
@@ -1027,26 +955,17 @@
                         gridPlaceholder.classList.add('hidden');
                     }
 
-                    // When we click the showcase search icon, open the dropdown panel
-                    if (searchPanel) {
-                        searchPanel.classList.remove('collapsed');
-                    }
-
-                    if (toggleSearchPanelBtn) {
-                        toggleSearchPanelBtn.classList.add('expanded');
-                    }
+                    openSearchOverlay();
                 }, 300);
             }
 
             function showShowcaseMode() {
                 searchGridMode.classList.remove('active');
+                closeSearchOverlay();
                 setTimeout(() => {
                     showcaseMode.classList.remove('hidden');
                     if (showSearchBtn) {
                         showSearchBtn.classList.remove('expanded');
-                    }
-                    if (toggleSearchPanelBtn) {
-                        toggleSearchPanelBtn.classList.remove('expanded');
                     }
                     startSlideshow();
                 }, 300);
@@ -1055,20 +974,24 @@
                 }
             }
 
+            function openSearchOverlay() {
+                if (searchModal) {
+                    searchModal.classList.add('active');
+                }
+            }
+
+            function closeSearchOverlay() {
+                if (searchModal) {
+                    searchModal.classList.remove('active');
+                }
+            }
+
             document.addEventListener('DOMContentLoaded', function() {
                 if (hasQuery) {
-                    // If loaded with a query (staff_id in URL), go straight to search mode.
                     showcaseMode.classList.add('hidden');
                     searchGridMode.classList.add('active');
-                    // Keep the panel collapsed initially for the "professional" look
-                    if (searchPanel && collapseSearchPanel) {
-                        searchPanel.classList.add('collapsed');
-                    }
                     if (showSearchBtn) {
                         showSearchBtn.classList.add('expanded');
-                    }
-                    if (toggleSearchPanelBtn) {
-                        toggleSearchPanelBtn.classList.add('expanded');
                     }
                 } else {
                     startSlideshow();
@@ -1076,15 +999,23 @@
 
                 showSearchBtn.addEventListener('click', showSearchMode);
                 backToShowcaseBtn.addEventListener('click', showShowcaseMode);
-
-                if (toggleSearchPanelBtn && searchPanel) {
-                    toggleSearchPanelBtn.addEventListener('click', function() {
-                        const isCollapsed = searchPanel.classList.toggle('collapsed');
-                        // expand button when panel is visible
-                        this.classList.toggle('expanded', !isCollapsed);
+                if (openSearchModalBtn) {
+                    openSearchModalBtn.addEventListener('click', function() {
+                        openSearchOverlay();
                     });
                 }
-
+                if (searchModalClose) {
+                    searchModalClose.addEventListener('click', function() {
+                        closeSearchOverlay();
+                    });
+                }
+                if (searchModal) {
+                    searchModal.addEventListener('click', function(e) {
+                        if (e.target === searchModal) {
+                            closeSearchOverlay();
+                        }
+                    });
+                }
             });
         })();
     </script>
@@ -1098,9 +1029,11 @@
             $staffSelect.select2({
                 placeholder: $staffSelect.data('placeholder'),
                 allowClear: true,
-                width: '100%'
+                width: '100%',
+                dropdownParent: $('#searchModal .search-modal-card')
             });
             $staffSelect.on('change', function() {
+                $('#searchModal').removeClass('active');
                 $('#staffSearchForm').submit();
             });
         });
